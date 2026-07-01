@@ -198,8 +198,14 @@ const WORKSHEET_NUM = 1; // ← increment for each new worksheet (1=D/E/F, 2=G/H
 // When this name is selected: fixed question order,
 // fixed choices, unlimited attempts, no data saved.
 const TEST_STUDENT = 'Kyle';
-const { createClient } = supabase;
-const db = createClient(SUPA_URL, SUPA_KEY);
+// Initialise Supabase safely — if CDN fails to load the script still runs
+let db = null;
+try {
+  const { createClient } = supabase;
+  db = createClient(SUPA_URL, SUPA_KEY);
+} catch(e) {
+  console.warn('Supabase did not load — attempt tracking disabled:', e);
+}
 
 // ══════════════════════════════════════════════
 //  STUDENT ROSTER
@@ -441,6 +447,15 @@ async function startQuiz(){
 
   // Check attempts from Supabase
   errEl.style.display='none';
+
+  // If Supabase didn't load, run in offline mode (attempt 1, no lockout)
+  if(!db){
+    console.warn('Supabase unavailable — offline mode');
+    currentAttempt=1;
+    showQuiz(name,sec);
+    return;
+  }
+
   document.querySelector('.btn-start').textContent='กำลังตรวจสอบ…';
   document.querySelector('.btn-start').disabled=true;
 
@@ -536,4 +551,107 @@ function selectAnswer(qi,ci){
   if(userAnswers[qi]!==null)
     document.getElementById(`ch-${qi}-${userAnswers[qi]}`).classList.remove('sel');
   userAnswers[qi]=ci;
-  do
+  document.getElementById(`ch-${qi}-${ci}`).classList.add('sel');
+  updateProgress();
+}
+
+function updateProgress(){
+  const answered=userAnswers.filter(a=>a!==null).length;
+  const total=shuffledQuestions.length;
+  document.getElementById('progBar').style.width=`${(answered/total)*100}%`;
+  document.getElementById('progLbl').textContent=`${answered} / ${total} answered`;
+}
+
+async function submitQuiz(){
+  const unanswered=userAnswers.filter(a=>a===null).length;
+  if(unanswered>0){
+    const errEl=document.getElementById('submitErr');
+    errEl.style.display='block';
+    errEl.textContent=`⚠ Please answer all ${shuffledQuestions.length} questions before submitting.`;
+    return;
+  }
+
+  const name=document.getElementById('nameInput').value.trim().replace(/\s+/g,' ');
+  const sec=document.getElementById('sectionSel').value;
+
+  // Calculate score
+  let score=0;
+  shuffledQuestions.forEach((q,i)=>{ if(userAnswers[i]===q.answer) score++; });
+  const scoreStr=`${score}/${shuffledQuestions.length}`;
+
+  // Save to Supabase + Google Sheets (skip for test student)
+  if(name!==TEST_STUDENT){
+    if(db){
+      await db.from('past_perfect_attempts').insert({
+        student_name:name, section:sec,
+        attempt_number:currentAttempt, score:score
+      });
+    }
+    fetch(SHEETS_URL, {
+      method:'POST',
+      mode:'no-cors',
+      headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({
+        studentName:name, section:sec, score:scoreStr,
+        date:getDateStr(), attemptNum:currentAttempt,
+        worksheetNum:WORKSHEET_NUM
+      })
+    }).catch(()=>{});
+  }
+
+  showScore(name, sec, score);
+}
+
+function showScore(name, sec, score){
+  const total=shuffledQuestions.length;
+  const pct=Math.round((score/total)*100);
+  el('sName').textContent=name;
+  el('sSec').textContent=sec;
+  el('sScore').textContent=`${score} / ${total}`;
+  el('sPct').textContent=`${pct}%`;
+  el('sDate').textContent=getDateStr();
+
+  const warnEl=el('sWarn');
+  const retakeBtn=el('btnRetake');
+
+  if(name===TEST_STUDENT){
+    warnEl.style.display='block';
+    warnEl.textContent='🔧 TEST MODE — unlimited retakes, no data saved';
+    warnEl.style.color='#d97706';
+    retakeBtn.style.display='inline-block';
+  } else {
+    const attemptsLeft=MAX_ATTEMPTS-currentAttempt;
+    if(attemptsLeft>0){
+      warnEl.style.display='block';
+      warnEl.textContent=`⚠ คุณยังมีสิทธิ์ทำอีก ${attemptsLeft} ครั้ง`;
+      warnEl.style.color='';
+      retakeBtn.style.display='inline-block';
+    } else {
+      warnEl.style.display='block';
+      warnEl.textContent='🔒 นี่คือครั้งสุดท้ายของคุณ ไม่สามารถทำซ้ำได้อีก';
+      warnEl.style.color='';
+      retakeBtn.style.display='none';
+    }
+  }
+
+  el('scoreOverlay').style.display='flex';
+}
+
+function doRetake(){
+  closeScore();
+  const name=document.getElementById('nameInput').value.trim().replace(/\s+/g,' ');
+  const sec=document.getElementById('sectionSel').value;
+  if(name===TEST_STUDENT){currentAttempt=1;}else{currentAttempt++;}
+  showQuiz(name,sec);
+}
+
+function closeScore(){
+  el('scoreOverlay').style.display='none';
+  document.getElementById('phase-quiz').style.display='none';
+  document.getElementById('submitArea').style.display='none';
+  document.getElementById('phase-info').style.display='block';
+}
+
+</script>
+</body>
+</html>
