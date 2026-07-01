@@ -189,6 +189,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;min-height:100vh
 // ══════════════════════════════════════════════
 const SUPA_URL  = 'https://qcskyycfawjpiwlkuaao.supabase.co';
 const SUPA_KEY  = 'sb_publishable_GI4WUkE0dYedsB4G-H0xmw_R43bNAR0';
+const SHEETS_URL= 'https://script.google.com/macros/s/AKfycbzell27Z96pypmS1JDX73o7B4xZjDl_6DLvxtBkiLiEPUsg-ttWzyj2uWefGPC7lAlXgw/exec';
 const { createClient } = supabase;
 const db = createClient(SUPA_URL, SUPA_KEY);
 
@@ -541,6 +542,20 @@ async function submitQuiz(){
     student_name:name, section:sec,
     attempt_number:currentAttempt, score:score
   });
+
+  // Push score to Google Sheet (fire-and-forget, no-cors to avoid preflight)
+  fetch(SHEETS_URL, {
+    method:'POST',
+    mode:'no-cors',
+    headers:{'Content-Type':'text/plain'},
+    body:JSON.stringify({
+      studentName:name,
+      section:sec,
+      score:score,
+      date:getDateStr(),
+      attemptNum:currentAttempt
+    })
+  }).catch(()=>{});
 
   showScore(name,sec,score);
 }
