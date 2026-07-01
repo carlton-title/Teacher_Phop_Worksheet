@@ -48,6 +48,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;min-height:100vh
 .q-card:hover{border-color:#93c5fd}
 .q-card.answered{border-color:#bfdbfe;background:#eff6ff}
 .q-num{font-size:11px;font-weight:700;color:#2563eb;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.q-img{width:100%;max-width:600px;display:block;margin:0 auto 14px;border-radius:8px;border:1.5px solid #e2e8f0}
 .q-text{font-size:15px;font-weight:500;color:#1e293b;margin-bottom:14px;line-height:1.65}
 .choices{display:grid;grid-template-columns:1fr 1fr;gap:9px}
 .choice{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;border:1.5px solid #e2e8f0;border-radius:8px;cursor:pointer;font-size:14px;color:#1e293b;transition:background .15s,border-color .15s;user-select:none}
@@ -532,7 +533,9 @@ function renderQuestions(){
   shuffledQuestions.forEach((q,qi)=>{
     const card=document.createElement('div');
     card.className='q-card'; card.id=`qcard-${qi}`;
+    const imgNum = (q._orig !== undefined ? q._orig : qi) + 1;
     card.innerHTML=`<div class="q-num">Question ${qi+1}</div>
+      <img class="q-img" src="images/Q${imgNum}.png" alt="Question ${imgNum} image">
       <div class="q-text">${q.text}</div>
       <div class="choices" id="choices-${qi}"></div>`;
     q.choices.forEach((ch,ci)=>{
