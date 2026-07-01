@@ -51,7 +51,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;min-height:100vh
 .q-img{width:100%;max-width:560px;max-height:280px;object-fit:contain;display:block;margin:0 auto 14px;border-radius:8px;border:1.5px solid #e2e8f0}
 .q-text{font-size:17px;font-weight:700;color:#1e293b;margin-bottom:14px;line-height:1.65}
 .choices{display:grid;grid-template-columns:1fr 1fr;gap:9px}
-.choice{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;border:1.5px solid #e2e8f0;border-radius:8px;cursor:pointer;font-size:14px;color:#1e293b;transition:background .15s,border-color .15s;user-select:none}
+.choice{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;border:1.5px solid #e2e8f0;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;color:#1e293b;transition:background .15s,border-color .15s;user-select:none}
 .choice:hover{background:#eff6ff;border-color:#93c5fd}
 .choice.sel{background:#dbeafe;border-color:#2563eb;color:#1e40af;font-weight:600}
 .choice input{display:none}
@@ -95,11 +95,15 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;min-height:100vh
 .wrong-item .wq-text{font-size:13px;font-weight:500;color:#1e293b;line-height:1.5;margin-bottom:6px}
 .wrong-item .wq-your{font-size:12px;color:#64748b}.wrong-item .wq-your span{color:#dc2626;font-weight:600}
 
+.mob-br{display:none}
 @media(max-width:560px){
   #phase-info,.submit-area,#phase-quiz{padding-left:18px;padding-right:18px}
   .info-grid{grid-template-columns:1fr}
   .choices{grid-template-columns:1fr}
   .hdr{padding:22px 18px 16px}
+  .hdr .tag{font-size:10px;letter-spacing:0.5px}
+  .hdr h1{font-size:18px}
+  .mob-br{display:block}
   .score-card{padding:32px 24px}
   .q-img{max-height:200px}
   .q-text{font-size:15px}
@@ -113,7 +117,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;min-height:100vh
   <div class="hdr">
     <div class="tag">English Grammar · Past Perfect Tense</div>
     <h1>Past Perfect Tense Worksheet</h1>
-    <p>โรงเรียนสีคิ้ว "สวัสดิ์ผดุงวิทยา" &nbsp;·&nbsp; ภาคเรียนที่ 1 / 2569</p>
+    <p>โรงเรียนสีคิ้ว "สวัสดิ์ผดุงวิทยา"<br class="mob-br"> &nbsp;·&nbsp; ภาคเรียนที่ 1 / 2569</p>
     <p style="margin-top:8px;font-size:13px;opacity:.85">Subject Teacher: จักรินทร์ &nbsp;ชินณรงค์</p>
   </div>
 
