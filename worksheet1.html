@@ -48,8 +48,8 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;min-height:100vh
 .q-card:hover{border-color:#93c5fd}
 .q-card.answered{border-color:#bfdbfe;background:#eff6ff}
 .q-num{font-size:11px;font-weight:700;color:#2563eb;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
-.q-img{width:100%;max-width:600px;display:block;margin:0 auto 14px;border-radius:8px;border:1.5px solid #e2e8f0}
-.q-text{font-size:15px;font-weight:500;color:#1e293b;margin-bottom:14px;line-height:1.65}
+.q-img{width:100%;max-width:560px;max-height:280px;object-fit:contain;display:block;margin:0 auto 14px;border-radius:8px;border:1.5px solid #e2e8f0}
+.q-text{font-size:17px;font-weight:700;color:#1e293b;margin-bottom:14px;line-height:1.65}
 .choices{display:grid;grid-template-columns:1fr 1fr;gap:9px}
 .choice{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;border:1.5px solid #e2e8f0;border-radius:8px;cursor:pointer;font-size:14px;color:#1e293b;transition:background .15s,border-color .15s;user-select:none}
 .choice:hover{background:#eff6ff;border-color:#93c5fd}
@@ -101,6 +101,8 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;min-height:100vh
   .choices{grid-template-columns:1fr}
   .hdr{padding:22px 18px 16px}
   .score-card{padding:32px 24px}
+  .q-img{max-height:200px}
+  .q-text{font-size:15px}
 }
 </style>
 </head>
@@ -163,7 +165,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;min-height:100vh
 
   <div class="submit-area" id="submitArea" style="display:none">
     <div class="prog-wrap"><div class="prog-bar" id="progBar"></div></div>
-    <div class="prog-lbl" id="progLbl">0 / 10 answered</div>
+    <div class="prog-lbl" id="progLbl">0 / 20 answered</div>
     <p class="submit-err" id="submitErr">⚠ Please answer all 10 questions before submitting.</p>
     <button class="btn-submit" id="btnSubmit" onclick="submitQuiz()">Submit Worksheet</button>
   </div>
@@ -257,7 +259,7 @@ const BASE_QUESTIONS = [
     answer:3
   },
   { // 6 – SINCE
-    text:"He had not spoken to them since they _____ at university.",
+    text:"He had not spoken to him since they _____ at university.",
     choices:["meet","had met","met","were meeting"],
     answer:2
   },
@@ -548,6 +550,7 @@ function renderQuestions(){
     });
     c.appendChild(card);
   });
+  updateProgress();
 }
 
 function selectAnswer(qi,ci){
