@@ -85,6 +85,14 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;min-height:100vh
 .btn-close:hover{background:#334155}
 .btn-retake{background:#2563eb;color:#fff;border:none;padding:11px 36px;border-radius:7px;font-size:14px;font-weight:600;cursor:pointer;margin-left:10px;transition:background .2s}
 .btn-retake:hover{background:#1d4ed8}
+/* WRONG ANSWERS LIST */
+.score-card{max-height:88vh;overflow-y:auto}
+.wrong-list{margin-top:20px;text-align:left;border-top:1.5px solid #e2e8f0;padding-top:16px}
+.wrong-title{font-size:12px;font-weight:700;color:#dc2626;text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px}
+.wrong-item{background:#fef2f2;border:1.5px solid #fecaca;border-radius:8px;padding:12px 14px;margin-bottom:10px}
+.wrong-item .wq-label{font-size:11px;font-weight:700;color:#dc2626;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.wrong-item .wq-text{font-size:13px;font-weight:500;color:#1e293b;line-height:1.5;margin-bottom:6px}
+.wrong-item .wq-your{font-size:12px;color:#64748b}.wrong-item .wq-your span{color:#dc2626;font-weight:600}
 
 @media(max-width:560px){
   #phase-info,.submit-area,#phase-quiz{padding-left:18px;padding-right:18px}
@@ -128,18 +136,8 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;min-height:100vh
 
       <div class="field full">
         <label>วันที่ (Date – พุทธศักราช)</label>
-        <div class="date-row">
-          <select id="dDay"></select>
-          <select id="dMonth">
-            <option value="01">มกราคม</option><option value="02">กุมภาพันธ์</option>
-            <option value="03">มีนาคม</option><option value="04">เมษายน</option>
-            <option value="05">พฤษภาคม</option><option value="06">มิถุนายน</option>
-            <option value="07">กรกฎาคม</option><option value="08">สิงหาคม</option>
-            <option value="09">กันยายน</option><option value="10">ตุลาคม</option>
-            <option value="11">พฤศจิกายน</option><option value="12">ธันวาคม</option>
-          </select>
-          <select id="dYear"></select>
-        </div>
+        <input type="date" id="datePicker" style="width:100%;padding:10px 14px;border:1.5px solid #d0d7e3;border-radius:8px;font-size:15px;color:#1a202c;background:#fff;cursor:pointer;">
+        <div id="beDisplay" style="margin-top:6px;font-size:13px;color:#4a5568;text-align:center;"></div>
       </div>
     </div>
 
@@ -175,12 +173,13 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;min-height:100vh
     <div class="s-title">Worksheet Complete!</div>
     <div class="s-student" id="sStudent"></div>
     <div class="s-num" id="sNum"></div>
-    <div class="s-out">out of 10</div>
+    <div class="s-out">out of 20</div>
     <div class="s-pct" id="sPct"></div>
     <div class="s-msg" id="sMsg"></div>
     <div class="s-warn" id="sWarn" style="display:none"></div>
     <button class="btn-close" onclick="closeScore()">Close</button>
     <button class="btn-retake" id="btnRetake" style="display:none" onclick="doRetake()">Retake</button>
+    <div class="wrong-list" id="wrongList" style="display:none"></div>
   </div>
 </div>
 
@@ -188,8 +187,8 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;min-height:100vh
 // ══════════════════════════════════════════════
 //  SUPABASE CONFIG  ← fill in after project is ready
 // ══════════════════════════════════════════════
-const SUPA_URL  = 'SUPABASE_URL_PLACEHOLDER';
-const SUPA_KEY  = 'SUPABASE_ANON_KEY_PLACEHOLDER';
+const SUPA_URL  = 'https://qcskyycfawjpiwlkuaao.supabase.co';
+const SUPA_KEY  = 'sb_publishable_GI4WUkE0dYedsB4G-H0xmw_R43bNAR0';
 const { createClient } = supabase;
 const db = createClient(SUPA_URL, SUPA_KEY);
 
@@ -213,11 +212,11 @@ const STUDENTS = {
 };
 
 // ══════════════════════════════════════════════
-//  QUESTIONS  (10 time expressions)
+//  QUESTIONS  (20 items – Past Perfect Tense)
 // ══════════════════════════════════════════════
 const BASE_QUESTIONS = [
   { // 1 – BEFORE
-    text:"She _____ the project before the deadline.",
+    text:"She _____ the project before the deadline arrived.",
     choices:["has completed","had completed","was completing","will complete"],
     answer:1
   },
@@ -246,7 +245,7 @@ const BASE_QUESTIONS = [
     choices:["meet","had met","met","were meeting"],
     answer:2
   },
-  { // 7 – TILL / UNTIL
+  { // 7 – UNTIL
     text:"He had not eaten anything until he _____ his grandmother's house.",
     choices:["reaches","reached","had reached","reaching"],
     answer:1
@@ -264,6 +263,56 @@ const BASE_QUESTIONS = [
   { // 10 – NEVER
     text:"They had _____ experienced such cold weather before moving to Canada.",
     choices:["already","ever","just","never"],
+    answer:3
+  },
+  { // 11 – BEFORE
+    text:"Before she _____ the job, she had never worked in an office.",
+    choices:["gets","getting","got","will get"],
+    answer:2
+  },
+  { // 12 – AFTER
+    text:"He felt relieved after he _____ the difficult exam.",
+    choices:["had passed","passes","was passing","will pass"],
+    answer:0
+  },
+  { // 13 – ALREADY
+    text:"The teacher had already _____ the lesson when the late students arrived.",
+    choices:["starting","started","start","starts"],
+    answer:1
+  },
+  { // 14 – JUST
+    text:"The train had just _____ when we arrived at the station.",
+    choices:["leave","leaving","depart","left"],
+    answer:3
+  },
+  { // 15 – FOR
+    text:"She had studied French _____ three years before she moved to Paris.",
+    choices:["since","when","for","until"],
+    answer:2
+  },
+  { // 16 – SINCE
+    text:"It _____ raining since morning when we decided to cancel the trip.",
+    choices:["had been","has been","was","is"],
+    answer:0
+  },
+  { // 17 – WHEN
+    text:"When I called her, she had already _____ to sleep.",
+    choices:["goes","gone","went","going"],
+    answer:1
+  },
+  { // 18 – BY THE TIME
+    text:"By the time the ambulance _____, the patient had already recovered.",
+    choices:["arrives","arriving","arrived","had arrived"],
+    answer:2
+  },
+  { // 19 – NEVER
+    text:"I had _____ tasted durian before I visited Thailand.",
+    choices:["always","ever","already","never"],
+    answer:3
+  },
+  { // 20 – BEFORE
+    text:"The children had _____ all the cookies before their mother got home.",
+    choices:["eat","ate","eating","eaten"],
     answer:3
   }
 ];
@@ -305,25 +354,24 @@ const MAX_ATTEMPTS=3;
 // ══════════════════════════════════════════════
 //  DATE PICKER  – Buddhist Era
 // ══════════════════════════════════════════════
+const THAI_MONTHS=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+
+function updateBEDisplay(){
+  const val=document.getElementById('datePicker').value;
+  if(!val){document.getElementById('beDisplay').textContent='';return;}
+  const [y,m,d]=val.split('-').map(Number);
+  document.getElementById('beDisplay').textContent=`${d} ${THAI_MONTHS[m-1]} ${y+543}`;
+}
+
 function initDatePicker(){
-  const dayEl=document.getElementById('dDay');
-  const yearEl=document.getElementById('dYear');
+  const dp=document.getElementById('datePicker');
   const now=new Date();
-  for(let d=1;d<=31;d++){
-    const o=document.createElement('option');
-    o.value=String(d).padStart(2,'0');
-    o.textContent=d;
-    dayEl.appendChild(o);
-  }
-  dayEl.value=String(now.getDate()).padStart(2,'0');
-  const beNow=now.getFullYear()+543;
-  for(let y=beNow;y>=beNow-3;y--){
-    const o=document.createElement('option');
-    o.value=y; o.textContent=y;
-    yearEl.appendChild(o);
-  }
-  yearEl.value=beNow;
-  document.getElementById('dMonth').value=String(now.getMonth()+1).padStart(2,'0');
+  const yyyy=now.getFullYear();
+  const mm=String(now.getMonth()+1).padStart(2,'0');
+  const dd=String(now.getDate()).padStart(2,'0');
+  dp.value=`${yyyy}-${mm}-${dd}`;
+  dp.addEventListener('change',updateBEDisplay);
+  updateBEDisplay();
 }
 
 // ══════════════════════════════════════════════
@@ -342,11 +390,10 @@ function onSectionChange(){
 function validateName(){document.getElementById('infoErr').style.display='none';}
 
 function getDateStr(){
-  const d=document.getElementById('dDay').value;
-  const m=document.getElementById('dMonth');
-  const mName=m.options[m.selectedIndex].text;
-  const y=document.getElementById('dYear').value;
-  return `${parseInt(d)} ${mName} ${y}`;
+  const val=document.getElementById('datePicker').value;
+  if(!val) return '';
+  const [y,m,d]=val.split('-').map(Number);
+  return `${d} ${THAI_MONTHS[m-1]} ${y+543}`;
 }
 
 // ══════════════════════════════════════════════
@@ -357,7 +404,8 @@ async function startQuiz(){
   const sec=document.getElementById('sectionSel').value;
   const errEl=document.getElementById('infoErr');
 
-  if(!sec||!name){errEl.style.display='block';return;}
+  const dateVal=document.getElementById('datePicker').value;
+  if(!sec||!name||!dateVal){errEl.style.display='block';return;}
 
   // Validate name in roster (normalise spaces)
   const norm=s=>s.replace(/\s+/g,' ').trim();
@@ -431,7 +479,7 @@ function showQuiz(name,sec){
     return {...q,choices:newChoices,answer:newAnswer};
   });
 
-  userAnswers=new Array(10).fill(null);
+  userAnswers=new Array(20).fill(null);
   renderQuestions();
 }
 
@@ -469,7 +517,7 @@ function updateProgress(){
   const done=userAnswers.filter(a=>a!==null).length;
   const pct=(done/10)*100;
   document.getElementById('progBar').style.width=pct+'%';
-  document.getElementById('progLbl').textContent=`${done} / 10 answered`;
+  document.getElementById('progLbl').textContent=`${done} / 20 answered`;
 }
 
 // ══════════════════════════════════════════════
@@ -498,19 +546,41 @@ async function submitQuiz(){
 }
 
 function showScore(name,sec,score){
-  const pct=Math.round((score/10)*100);
+  const pct=Math.round((score/20)*100);
   const el=id=>document.getElementById(id);
 
-  el('sIcon').textContent=score>=8?'🎉':score>=5?'👍':'📖';
+  el('sIcon').textContent=score>=16?'🎉':score>=10?'👍':'📖';
   el('sStudent').textContent=`${name}  ·  ${sec}  ·  Attempt ${currentAttempt}/${MAX_ATTEMPTS}`;
   el('sNum').textContent=score;
-  el('sNum').className='s-num '+(score>=8?'hi':score>=5?'mid':'lo');
+  el('sNum').className='s-num '+(score>=16?'hi':score>=10?'mid':'lo');
   el('sPct').textContent=pct+'%';
-  el('sMsg').textContent=score>=8
+  el('sMsg').textContent=score>=16
     ?'Excellent! You have a strong command of the Past Perfect tense.'
-    :score>=5
+    :score>=10
     ?'Good effort! Review the time expressions you missed.'
     :'Keep practising! Focus on how "had + past participle" works with time expressions.';
+
+  // Show INCORRECT answers only (no correct answer revealed)
+  const wrongs=[];
+  userAnswers.forEach((ans,qi)=>{
+    const q=shuffledQuestions[qi];
+    if(ans!==q.answer){
+      wrongs.push({num:qi+1, text:q.text, yourAns:ans!=null?q.choices[ans]:'(no answer)'});
+    }
+  });
+  const wl=el('wrongList');
+  if(wrongs.length>0){
+    wl.style.display='block';
+    wl.innerHTML=`<div class="wrong-title">❌ Questions You Missed (${wrongs.length} of 20)</div>`+
+      wrongs.map(w=>`<div class="wrong-item">
+        <div class="wq-label">Question ${w.num}</div>
+        <div class="wq-text">${w.text}</div>
+        <div class="wq-your">Your answer: <span>${w.yourAns}</span></div>
+      </div>`).join('');
+  } else {
+    wl.style.display='block';
+    wl.innerHTML='<div class="wrong-title" style="color:#16a34a">✅ Perfect score! All 20 correct!</div>';
+  }
 
   const attemptsLeft=MAX_ATTEMPTS-currentAttempt;
   if(attemptsLeft>0){
@@ -533,9 +603,9 @@ function doRetake(){
   const sec=document.getElementById('sectionSel').value;
   currentAttempt++;
   document.getElementById('qContainer').innerHTML='';
-  userAnswers=new Array(10).fill(null);
+  userAnswers=new Array(20).fill(null);
   document.getElementById('progBar').style.width='0%';
-  document.getElementById('progLbl').textContent='0 / 10 answered';
+  document.getElementById('progLbl').textContent='0 / 20 answered';
   showQuiz(name,sec);
 }
 
