@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Past Perfect Tense – Teacher Phop</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;min-height:100vh;padding:24px 12px;color:#1a202c}
+.card{max-width:780px;margin:0 auto;background:#fff;border-radius:14px;box-shadow:0 4px 28px rgba(0,0,0,.10);overflow:hidden}
+
+/* HEADER */
+.hdr{background:linear-gradient(135deg,#1a3a6e 0%,#2563eb 100%);color:#fff;padding:30px 36px 22px;text-align:center}
+.hdr .tag{font-size:11px;letter-spacing:2px;text-transform:uppercase;opacity:.8;margin-bottom:8px}
+.hdr h1{font-size:22px;font-weight:700;margin-bottom:4px}
+.hdr p{font-size:13px;opacity:.85}
+
+/* PHASE 1 – INFO */
+#phase-info{padding:28px 36px 30px}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.info-grid .full{grid-column:1/-1}
+.field label{display:block;font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.field input,.field select{width:100%;padding:10px 14px;border:1.5px solid #cbd5e1;border-radius:8px;font-size:15px;font-family:inherit;background:#fff;color:#1a202c;transition:border-color .2s,box-shadow .2s}
+.field input:focus,.field select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+.field input[list]{caret-color:#2563eb}
+
+/* date row */
+.date-row{display:grid;grid-template-columns:1fr 2fr 1.4fr;gap:8px}
+.date-row select{padding:10px 8px;font-size:14px}
+
+.btn-start{margin-top:24px;display:block;width:100%;padding:14px;background:linear-gradient(135deg,#1a3a6e,#2563eb);color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;transition:opacity .2s}
+.btn-start:hover{opacity:.9}
+
+.err{color:#dc2626;font-size:13px;margin-top:10px;display:none}
+
+/* LOCKED */
+#phase-locked{display:none;padding:60px 36px;text-align:center}
+.lock-icon{font-size:64px;margin-bottom:16px}
+.lock-title{font-size:22px;font-weight:700;color:#dc2626;margin-bottom:10px}
+.lock-msg{font-size:15px;color:#64748b;line-height:1.6}
+
+/* PHASE 2 – QUIZ */
+#phase-quiz{display:none;padding:24px 36px 16px}
+.q-section-title{font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:20px;display:flex;align-items:center;gap:10px}
+.q-section-title::after{content:'';flex:1;height:1.5px;background:#e2e8f0}
+.q-card{background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:18px 20px;margin-bottom:16px;transition:border-color .2s}
+.q-card:hover{border-color:#93c5fd}
+.q-card.answered{border-color:#bfdbfe;background:#eff6ff}
+.q-num{font-size:11px;font-weight:700;color:#2563eb;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.q-text{font-size:15px;font-weight:500;color:#1e293b;margin-bottom:14px;line-height:1.65}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.choice{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;border:1.5px solid #e2e8f0;border-radius:8px;cursor:pointer;font-size:14px;color:#1e293b;transition:background .15s,border-color .15s;user-select:none}
+.choice:hover{background:#eff6ff;border-color:#93c5fd}
+.choice.sel{background:#dbeafe;border-color:#2563eb;color:#1e40af;font-weight:600}
+.choice input{display:none}
+.cletter{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:#e2e8f0;font-size:11px;font-weight:700;color:#475569;flex-shrink:0;transition:background .15s,color .15s}
+.choice.sel .cletter{background:#2563eb;color:#fff}
+
+/* SUBMIT AREA */
+.submit-area{padding:16px 36px 30px}
+.prog-wrap{background:#e2e8f0;border-radius:99px;height:7px;overflow:hidden;margin-bottom:6px}
+.prog-bar{height:100%;background:linear-gradient(90deg,#2563eb,#60a5fa);border-radius:99px;width:0%;transition:width .3s}
+.prog-lbl{font-size:13px;color:#64748b;text-align:right;margin-bottom:16px}
+.submit-err{color:#dc2626;font-size:13px;display:none;margin-bottom:12px;text-align:center}
+.btn-submit{display:block;width:100%;padding:14px;background:linear-gradient(135deg,#1a3a6e,#2563eb);color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(37,99,235,.28);transition:opacity .2s,transform .1s}
+.btn-submit:hover{opacity:.92;transform:translateY(-1px)}
+.btn-submit:disabled{opacity:.5;cursor:not-allowed;transform:none}
+
+/* SCORE OVERLAY */
+.overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:100;align-items:center;justify-content:center}
+.overlay.show{display:flex}
+.score-card{background:#fff;border-radius:16px;padding:44px 48px;text-align:center;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.22);animation:pop .35s cubic-bezier(.34,1.56,.64,1)}
+@keyframes pop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+.s-icon{font-size:56px;margin-bottom:12px}
+.s-title{font-size:17px;font-weight:700;color:#1e293b;margin-bottom:4px}
+.s-student{font-size:13px;color:#64748b;margin-bottom:20px}
+.s-num{font-size:72px;font-weight:800;line-height:1;margin-bottom:4px}
+.s-num.hi{color:#16a34a}.s-num.mid{color:#d97706}.s-num.lo{color:#dc2626}
+.s-out{font-size:15px;color:#64748b;margin-bottom:4px}
+.s-pct{font-size:13px;color:#94a3b8;margin-bottom:20px}
+.s-msg{font-size:14px;color:#475569;line-height:1.6;margin-bottom:24px}
+.s-warn{font-size:13px;color:#dc2626;font-weight:600;margin-bottom:20px;padding:10px 14px;background:#fef2f2;border-radius:8px}
+.btn-close{background:#1e293b;color:#fff;border:none;padding:11px 36px;border-radius:7px;font-size:14px;font-weight:600;cursor:pointer;transition:background .2s}
+.btn-close:hover{background:#334155}
+.btn-retake{background:#2563eb;color:#fff;border:none;padding:11px 36px;border-radius:7px;font-size:14px;font-weight:600;cursor:pointer;margin-left:10px;transition:background .2s}
+.btn-retake:hover{background:#1d4ed8}
+/* WRONG ANSWERS LIST */
+.score-card{max-height:88vh;overflow-y:auto}
+.wrong-list{margin-top:20px;text-align:left;border-top:1.5px solid #e2e8f0;padding-top:16px}
+.wrong-title{font-size:12px;font-weight:700;color:#dc2626;text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px}
+.wrong-item{background:#fef2f2;border:1.5px solid #fecaca;border-radius:8px;padding:12px 14px;margin-bottom:10px}
+.wrong-item .wq-label{font-size:11px;font-weight:700;color:#dc2626;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.wrong-item .wq-text{font-size:13px;font-weight:500;color:#1e293b;line-height:1.5;margin-bottom:6px}
+.wrong-item .wq-your{font-size:12px;color:#64748b}.wrong-item .wq-your span{color:#dc2626;font-weight:600}
+
+@media(max-width:560px){
+  #phase-info,.submit-area,#phase-quiz{padding-left:18px;padding-right:18px}
+  .info-grid{grid-template-columns:1fr}
+  .choices{grid-template-columns:1fr}
+  .hdr{padding:22px 18px 16px}
+  .score-card{padding:32px 24px}
+}
+</style>
+</head>
+<body>
+<div class="card">
+
+  <!-- HEADER -->
+  <div class="hdr">
+    <div class="tag">English Grammar · Past Perfect Tense</div>
+    <h1>Past Perfect Tense Worksheet</h1>
+    <p>โรงเรียนสีคิ้ว "สวัสดิ์ผดุงวิทยา" &nbsp;·&nbsp; ภาคเรียนที่ 1 / 2569</p>
+  </div>
+
+  <!-- PHASE 1 – STUDENT INFO -->
+  <div id="phase-info">
+    <div class="info-grid">
+      <div class="field full">
+        <label>Section (ห้องเรียน)</label>
+        <select id="sectionSel" onchange="onSectionChange()">
+          <option value="">— เลือกห้อง —</option>
+          <option>M5/1</option><option>M5/2</option><option>M5/3</option>
+          <option>M5/4</option><option>M5/5</option><option>M5/6</option>
+          <option>M5/7</option><option>M5/8</option><option>M5/9</option>
+          <option>M5/10</option><option>M5/11</option><option>M5/12</option>
+          <option>M5/13</option>
+        </select>
+      </div>
+
+      <div class="field full">
+        <label>ชื่อ-นามสกุล (Student Name in Thai)</label>
+        <select id="nameInput" onchange="validateName()" disabled style="width:100%;padding:10px 14px;border:1.5px solid #d0d7e3;border-radius:8px;font-size:15px;color:#1a202c;background:#fff;cursor:pointer;">
+          <option value="">— เลือกห้องก่อน —</option>
+        </select>
+      </div>
+
+      <div class="field full">
+        <label>วันที่ (Date – พุทธศักราช)</label>
+        <input type="date" id="datePicker" style="width:100%;padding:10px 14px;border:1.5px solid #d0d7e3;border-radius:8px;font-size:15px;color:#1a202c;background:#fff;cursor:pointer;">
+        <div id="beDisplay" style="margin-top:6px;font-size:13px;color:#4a5568;text-align:center;"></div>
+      </div>
+    </div>
+
+    <p class="err" id="infoErr">⚠ กรุณากรอกข้อมูลให้ครบถ้วนและตรวจสอบชื่อให้ถูกต้อง</p>
+    <button class="btn-start" onclick="startQuiz()">เริ่มทำแบบฝึกหัด ▶</button>
+  </div>
+
+  <!-- LOCKED -->
+  <div id="phase-locked">
+    <div class="lock-icon">🔒</div>
+    <div class="lock-title">Worksheet Locked</div>
+    <div class="lock-msg" id="lockMsg">คุณได้ทำแบบฝึกหัดครบ 3 ครั้งแล้ว<br>ไม่สามารถทำได้อีก กรุณาติดต่อครู</div>
+  </div>
+
+  <!-- PHASE 2 – QUIZ -->
+  <div id="phase-quiz">
+    <div class="q-section-title">Past Perfect Tense — 10 Questions</div>
+    <div id="qContainer"></div>
+  </div>
+
+  <div class="submit-area" id="submitArea" style="display:none">
+    <div class="prog-wrap"><div class="prog-bar" id="progBar"></div></div>
+    <div class="prog-lbl" id="progLbl">0 / 10 answered</div>
+    <p class="submit-err" id="submitErr">⚠ Please answer all 10 questions before submitting.</p>
+    <button class="btn-submit" id="btnSubmit" onclick="submitQuiz()">Submit Worksheet</button>
+  </div>
+</div>
+
+<!-- SCORE OVERLAY -->
+<div class="overlay" id="scoreOverlay">
+  <div class="score-card">
+    <div class="s-icon" id="sIcon"></div>
+    <div class="s-title">Worksheet Complete!</div>
+    <div class="s-student" id="sStudent"></div>
+    <div class="s-num" id="sNum"></div>
+    <div class="s-out">out of 20</div>
+    <div class="s-pct" id="sPct"></div>
+    <div class="s-msg" id="sMsg"></div>
+    <div class="s-warn" id="sWarn" style="display:none"></div>
+    <button class="btn-close" onclick="closeScore()">Close</button>
+    <button class="btn-retake" id="btnRetake" style="display:none" onclick="doRetake()">Retake</button>
+    <div class="wrong-list" id="wrongList" style="display:none"></div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+//  SUPABASE CONFIG  ← fill in after project is ready
+// ══════════════════════════════════════════════
+const SUPA_URL  = 'https://qcskyycfawjpiwlkuaao.supabase.co';
+const SUPA_KEY  = 'sb_publishable_GI4WUkE0dYedsB4G-H0xmw_R43bNAR0';
+const SHEETS_URL= 'https://script.google.com/macros/s/AKfycbzell27Z96pypmS1JDX73o7B4xZjDl_6DLvxtBkiLiEPUsg-ttWzyj2uWefGPC7lAlXgw/exec';
+const WORKSHEET_NUM = 1; // ← increment for each new worksheet (1=D/E/F, 2=G/H/I, 3=J/K/L …)
+
+// ── TEST STUDENT ─────────────────────────────────
+// When this name is selected: fixed question order,
+// fixed choices, unlimited attempts, no data saved.
+const TEST_STUDENT = 'Kyle';
+const { createClient } = supabase;
+const db = createClient(SUPA_URL, SUPA_KEY);
+
+// ══════════════════════════════════════════════
+//  STUDENT ROSTER
+// ══════════════════════════════════════════════
+const STUDENTS = {
+"M5/1":["นางสาวจุฬาลักษณ์ โอฬารพูล","นายพศิน คำป้อง","นางสาวกรกนก ใสจันทึก","นางสาวสุชาดา ภายจันทึก","นายณัฐวัฒน์ ศิริวัฒน์","นายพชรพล ก้อนจันทึก","นางสาวอารยา ศรีไสล","นางสาวพัชรี แทกระโทก","นางสาวหทัยรัตน์ วงศ์พินิจ","นางสาวกัญชลิกา โชติจันทึก","นางสาวอันนา วงศ์กระทุ่มทอง","นางสาวปริมประภา ทมธิแสง","นายธีรวัฒน์ ยินดีมาก","นายภัฒราวุฒ โมงขุนทด","นายศุภฤทธิ์ บุญจันทึก","นางสาวอรุณรัตน์ กิจจันทึก","นางสาวประพิมพ์พัชร แสนคลัง","นายกิตติภพ กนกนาก","นางสาวนภสร ดอนจันทร์ไพร","นางสาวอิชยา ศรีนาคา","นางสาวนฤมล สง่าสูงเนิน","นางสาวบัณฑิตา ตาวันดี","นายแทนคุณ เรืองจันทึก","นางสาวอารีย์ ฐานวิสัย","นางสาววราภรณ์ เขมารกุล","นางสาวสุดารัตน์ เขียวอัมพร","นางสาวณัฐณิชา พะยุพัด","นายนพณัฐ จึงเจริญ","นางสาววราภรณ์ บริรักษ์","นายอนาวิล ชาญเสาร์","นางสาวสิริกัญญา เลิศตะคุ","นางสาวสุชานาถ ช้อยขุนทด","นางสาววรารมย์ ตรงจันทึก","นางสาวปาณิศา หนูตะพงศ์","นางสาวพิมพ์ชนก บานกระโทก","นายณัฐกิตติ์ ดีหลอด","นางสาวภัทรวดี โอนกระโทก"],
+"M5/2":["นายชนกานต์ ศรีอ่อน","นายพิพัฒพงษ์ อ่อนวรรณ์","นายรัฐธีย์ สิมมาโคตร","นายสินสมุทร ทองประเสริฐ","นางสาวกนกรดา มะลิพุ่ม","นางสาวอภัสรา ใยทองหลาง","นายก้องภพ ตรงจันทึก","นายธีรพัฒน์ ขุนวิเศษ","นายธีรภัทร กมลรัตน์","นายพงศกรณ์ สมัครณรงค์","นางสาวพิมพ์รภัทร ปัญจารักษ์","นายพงศกร แหลมทองหลาง","นายศิวัช เนบสูงเนิน","นายสุกฤษฎิ์ ธูปขุนทด","นายปกรณ์เกียรติ พันเนตร","นายรุ่งเกียรติ ทวดจันทึก","นางสาวกชกร ผลโพธิ์","นายจิรภัทร ทิพย์สูงเนิน","นายศิวกร จงเห็นกลาง","นายกิตติธร เกิมขุนทด","นายจตุรวิชญ์ หาสุข","นายชยุต เปียกไธสง","นายชิณภัทร สิงห์น้อย","นายธนพล สาระพล","นายวีระเดช ผินสูงเนิน","นางสาวรินรดา แผ่กระโทก","นายธนายุทธ ซ้อนจันทึก","นางสาวอุรัสยา อ่อนส้มกิจ","นายเอื้ออังกูร ฉูตรสูงเนิน","นายจิรพัฒน์ งอบโคกกรวด","นายธนโชติ ชาญสูงเนิน","นายวิรภัทร ดีขุนทด","นางสาวอุฐาภรณ์ เบียดนอก","นายพัทธนันท์ ดังกลาง","นางสาวอารียา ศรีเพ็ชร","นายภานุวัฒน์ เยื้องจันทึก","นายธีรเมธ มาพิทักษ์"],
+"M5/3":["นางสาวปนัสยา แซ่เหีย","นายธันวา เชาวนกุล","นางสาวสุพัตรา ทมธิแสง","นางสาวพรรธน์ชญมน อินอ้อย","นายภรัณยู ลือคำสา","นายกนกพล กกทองหลาง","นายยุทธเดช เศษจันทึก","นางสาวธนภรณ์ วรพรพิสิฐผล","นางสาวระพีพัฒน์ โมงขุนทด","นางสาวมีนา วงษ์ไทย","นางสาวสุมัทนา ทมธิแสง","นางสาวปริญญาดา บุรกิจภาชัย","นางสาวนันทิกานต์ วิชาเกวียน","นางสาวณัฐปรียา เขือนอก","นายศาสตราวุธ ประนิสอน","นายพิชาภพ โพธิ์ดี","นายพิทักษ์ นิลรักษ์","นายชยากร ไก่สันเทียะ","นายอเล็กซ์ เจมส์ จอร์ดิ้ง","นายสมิทธ์ ศรีโคกกรวด","นายสรวิชญ์ เขือนอก","นางสาวณัฐสุกัญญา เขียวนิล","นางสาวณัฐธิชา ขระเขื่อน","นางสาวชลลดา สุขกิจ","นางสาวนันทกานต์ ผ่องสูงเนิน","นางสาวเกวลิน คูณขุนทด","นางสาวกาญจนา สุภาพพูล","นางสาวสลิลทิพย์ โชติโคกสูง","นางสาวศุภัชญา แฝงสารคาม","นางสาวนิลภัทร ทองคำ","นางสาวเอ็มอร โพธิเวียงคำ","นางสาววนัสนันท์ การบรรจง","นางสาวนัทชา คงพูล","นางสาวปัณฑารีย์ คันตะลี","นางสาวขวัญจิราพร สุกใส","นางสาวปิยธิดา คิดถูก","นางสาวธาชิณี พนมหอม","นางสาวพรนิภา เวกสูงเนิน"],
+"M5/4":["นางสาวนริศรา พึ่งทอง","นางสาวสุธาวัลย์ ผิวจันทึก","นายกิตติศักดิ์ คัมภิรานนท์","นางสาววริศรา พงศ์พรอนันต์","นางสาวกัญญาพัชร ดาวขุนทด","นางสาวกุลนิดา เมืองจันทึก","นางสาวศศินิภา หง้ากุล","นางสาวศุภิสรา บุตรสีเขียว","นายปัณณวิชญ์ ดิเรกศรี","นางสาวปนัสยา ทัศนาลัย","นางสาวเพ็ญพิชชา สมวงค์","นางสาวเขมจิรา หินสูงเนิน","นางสาวณัฐวรรณ แซรพันดุง","นางสาวอนุธิดา จันทร์ทองหลาง","นายณัฐคม หล้าทอง","นางสาวธันย์ชิตา พะตัน","นายเศกสรรค์ รัตนพันธ์","นายกรกช พิพัฒรัตนะ","นายเจษฎา ได้ระเบียบ","นายอนุพงษ์ อินทร์นารัมย์","นายพลากร เบาะจันทึก","นายปัณณวิชญ์ กรวดสูงเนิน","นายชนกร คุดซิตา","นายนรินทร แสนก่อ","นางสาวอริสรา ข้องคาน","นางสาวกัญญาพัชร เหลืองจันทึก","นางสาวสุมณทิพย์ พลจันทึก","นางสาวเกตุนภา เหนียวจันทึก","นางสาวศุภนุช แซ่โค้ว","นางสาวพิมพกานต์ ติจันทึก","นางสาวนุชนาฏ มอมขุนทด","นางสาวญาณภัทร เหลืองจันทึก","นางสาวบัณฑิตา กลีบกลาง","นางสาวภัคธีมา คูนอก","นางสาวอณุรดา ขุยจันทึก"],
+"M5/5":["นายณัฏฐนันท์ สีมา","นางสาวสุพรรษา อิ้วจันทึก","นายเปรมปรีดิ์ โหศิริวรรณ","นายอารักษ์ ตีรชาติ","นายสุริยะ เชิดเพชรรัตน์","นางสาวแพรวพรรณ ทิมจันทึก","นางสาวอธิชา มากสูงเนิน","นายจิรภัทร พรมเนตร์","นายทวีชัย ต่วนจันทึก","นายธีรยุทธ มีพุ่ม","นางสาวชัญญาณ์ภัช กอบโชคจีราภัคค์","นางสาวพนัสรา หาญสูงเนิน","นายธนากร หาญกล้า","นายภัทรดนัย แนมขุนทด","นายธนกร ทองเฟื่อง","นายวรรณศิลป์ โชพุดซา","นายวรวุฒิ แฉล้มในเมือง","นางสาวถิรดา อันทะสา","นางสาวพลอยแก้ว เดชสูงเนิน","นายปฏิภาณ หมวกสันเทียะ","นายชลกร บุญพัน","นางสาววริศรา บุญชอบ","นายพีลพล วงษา","นายธนภัทร ธิวงค์","นายชวรัตน์ เบียดขุนทด","นายธีระโชติ หนูจันทึก","นางสาวศิรภัสสร เง็บสูงเนิน","นางสาวพรชิตา รักษาพงษ์","นางสาวพรนภัส ดลขุนทด","นายพงศภัค วงษ์ลา","นางสาวไอลดา หูวานนท์","นางสาวณัชชา เพียซ้าย","นางสาวปานชีวา เพียโคตร","นางสาวมนัญชยา ช่อบุญกลาง","นางสาวรุ่งอรุณ กางสันเทียะ","นางสาวปวริศา โทขุนทศ","นายธีรภัทร ชินจันทึก","นายธนากร เริงสมุทร","นางสาวฐิติกานต์ วรรณารักษ์"],
+"M5/6":["นายนพกร แสงทอง","นายพัชรณัฐ นาถาบำรุง","นางสาวปวันรัตน์ จันทร์สมาน","นางสาวญาณิศา มุมขุนทด","นางสาวจันทรรัตน์ จันทร์สมาน","นางสาวชลธิชา แซ่หลี","นางสาวนาตยา มั่งจันทึก","นางสาวพิชญา มาศรี","นางสาวรุ่งทิวา ไชยศรี","นายอดุลวิทย์ แท่นทอง","นายธนกฤต โหม่งสูงเนิน","นางสาวจังคนิภา จำปาเรือง","นางสาวพิมรดา แสนธิ","นางสาวกัญญาภัค นวลละออง","นางสาวนุชวรา พลโคกก่อง","นายกิตติกวิน อนุศักดิ์เสถียร","นายกิตติพศ ลีคำ","นายธณากร บุญรินทร์","นายพิภัช นามราช","นางสาวจรรยพร เพียซ้าย","นางสาววริศรา เข็มเล็ก","นางสาวกัญญาภัทร เมืองศรีไชย","นายอธิวัฒน์ เพียซ้าย","นายนันทพงษ์ ตรงจันทึก","นายฐิรวัฒน์ จันทรคุปต์","นายนิธิศ ครุฑจันทรา","นายรุ่งศักดิ์ บุญช่วย","นายชัยณรงค์ เกตุจันทึก","นางสาวภัทราวดี เปียสันเทียะ","นางสาวอภิสรา สิงห์พรม","นางสาววิชญาดา จงอยู่กลาง","นางสาวณิชาพร สอนจันทึก","นางสาวธาริณี เพิ่มไพบูลย์","นางสาวปิยะภรณ์ ใจกล้า","นางสาวนภัสสร น้อยจันทึก","นางสาวอภิชญา สิงห์พรม","นางสาวสุนันท์ธา ศาลาแดง","นางสาวอนุธิดา คลังจันทึก","นางสาวรัตนกร พิมพรมมา","นางสาวชีวาพร อาจปรุ"],
+"M5/7":["นางสาวเสาวภา พิมพ์ใส","นางสาวปวีณา อิงสันเทียะ","นางสาวอริสา ภักดีมาก","นายชิษณุพงศ์ เปล่งสันเทียะ","นายเทวา ประเสริฐจันทึก","นายปรมัตถ์ ศิริโชติ","นางสาวจิดาภา ท้าวจัตุรัส","นางสาวณิชาวีร์ กล่อมขุนทด","นางสาววันวิสา ปิดสายะ","นางสาวอภิชญา เมืองพุดทรา","นางสาวอัมพาพัชร์ โอภาสภัคพงศ์","นายนนทวัช ญาติจันทึก","นายสิรวิชญ์ ฤทธิบาล","นางสาวเบญญา คราวจันทึก","นางสาวรณิดา จงจิตร์กลาง","นางสาวลภัส อินทร์กูล","นางสาวอภิสรา ภาวจันทึก","นางสาวอารยา หวังตันกลาง","นายเกียรติกุล กุลสุทธิ์","นางสาววิชุดา กระจัดกลาง","นางสาววีรดา พิผ่วนนอก","นายจิรสิน ทุมขุนทด","นายนิชคุณ ดาวกระจาย","นางสาวจิตรวดี สร้อยสูงเนิน","นางสาวชนันธร เกตุกลางดอน","นางสาวทินัฐดา จันศรี","นายชัยภัทร ชูโชติ","นายพัชรพล คือพันดุง","นายรณกร สุขจีน","นายชัยณรงค์ แย้มจันทึก","นายอิสรานุวัฒน์ จอกพุดซา","นายพงศภัค โยธาภักดี","นางสาวพรวิมล รักวิเศษ","นางสาวรวินันท์ บุตรีวงค์","นางสาวกรองแก้ว สีสวาท","นางสาวประภาวดี สุทธิ","นางสาวบัณฑิตา บัวสุวรรณ์","นางสาวศศิธร มุระกะ","นางสาวจิรภิญญา ฟองจันทึก"],
+"M5/8":["นายอนวัช เถาว์ทิพย์","นางสาวเขมิกา มะณีส่อง","นายกิตติพัฒน์ เง็บสูงเนิน","นายธนบัตร สุรบุตร","นายปรัชญา อักษรวิลัย","นางสาวณัฐวดี ศิลาโคกกรวด","นางสาวกนกวรรณ แซ่ตั้ง","นางสาวนิฌาภัทร จั้นพลแสน","นางสาวณัฐฐา ภูแค","นางสาวธัญชนก คลาจันทึก","นางสาวนิภาพร สายแสงใส","นางสาวปภาดา เรืองจันทึก","นายเกียรติศักดิ์ มาสะพันธุ์","นางสาวพรนัชชา แลจบก","นายกิตติกานต์ เกษรประทุม","นายรพีพงศ์ จันกูล","นางสาวดุจฤดี แสนพลราช","นายพงศ์พล ฉัตรสูงเนิน","นายธนโชติ สุนทร","นายจิรภัทร มาลัยทอง","นายธีรภัทร ไฝจันทึก","นายพุฒิพงศ์ ตาติย์","นายพีรพัฒน์ สุดจันทึก","นายอัคราวุฒิ นิ่มทอง","นางสาวฐานิกา ขุมทรัพย์","นายกฤศ กล่อมสูงเนิน","นางสาวภรดี เพียซ้าย","นางสาวมะลิสา อิ่มจันทึก","นางสาวอภิสรา วิไลขำ","นางสาวนันทิตา ดับสันเทียะ","นางสาวกันยารัตน์ หลอดคำ","นางสาวสุนิสา หาสูง","นางสาวไอรดา สีใส","นางสาวกรรวี วรศักดาพิศาล","นางสาวนันทิยา มูลมา","นางสาวกุลธิดา คำนนท์"],
+"M5/9":["นางสาวกัลยรัตน์ เนตรสูงเนิน","นายคณิศร จันพิมาย","นายบุณยกร สุรัตน์","นายชนะโชติ วรรณะนานนท์","นางสาวกัญญาณี เขม้นกสิกรรม","นางสาวนฤภร พรพิทัก","นางสาวนฤภรณ์ หงษ์ศรีแก้ว","นางสาวณัฏฐณิชา เหมวรานนท์","นางสาวอรอินทุ์ ตรีภพ","นางสาวสิตานัน พลสวรรค์","นายณัฐธาดา บุญพันธ์","นายชนะโชติ เทียวสูงเนิน","นายณัฐนนท์ สุรินทร์","นางสาวปภัศรา จุดจันทึก","นางสาวพิชญาภา เพ็งสระเกษ","นายวันชนะ เป้าเข็ม","นายสรัลพล สุขมี","นายอดุลธน ทางทอง","นางสาวปารมี ม่วงกลาง","นางสาวพลอยรดา เชิดชู","นางสาวภัคธีมา จรมั่งนอก","นางสาวศิรประภา แดงจันทึก","นายกันตินันท์ พุทธิพันธ์","นายภูตะวัน ประทีป","นางสาวกานต์ธีรา พรมถนนถั่ว","นางสาวสุจิตรา อัฒจักร","นางสาวอัครมณี จันทร์ลา","นายเดชาวัสส์ ทองทวี","นายชนกันต์ ยาสูงเนิน","นายสุรศิลป์ กุณาศล","นายเจิ้น เทียน อันทะสา","นางสาวศิริขวัญ ชมกลิ่น","นางสาวพิชามญชุ์ โหมกจันทึก","นางสาวจิตตะวัน สงขุนทด","นางสาวพิชชานันท์ ญาติจันทึก","นางสาวรวินท์นิภา บุตรีวงค์","นางสาวกันยาพร จันอากาศ","นางสาววีรยา วุฒิสาร","นางสาวนิภาพร เพียซ้าย"],
+"M5/10":["นายพสิษฐ์ ขุนวิเศษ","นางสาวกมลรัตน์ สง่าเนตร","นางสาวธัญพร ลอยจันทึก","นางสาววชิรญาณ์ คงฤทธิ์","นางสาววชิราภรณ์ ตะบูนพงษ์","นางสาววิภาดา ท้าวสูงเนิน","นางสาวศุภาพิชญ์ ช่างประดิษฐ์","นางสาวอมันตา ประสงค์สุทธิพร","นางสาวอุษณี เกิดจันทรา","นางสาวจิรัชยา ชินวงศ์","นางสาวนภาพร ชาญสูงเนิน","นางสาวศตพร รัตนอารีย์ธรรม","นางสาวสุพิชญา สินนอก","นายพิสิษฐ์ เปาจันทึก","นายพงศกร เซียนจอหอ","นางสาวจรรยพร ฉูดสูงเนิน","นางสาวปัณฑารีย์ หลั่นจันทึก","นางสาวเมษา ค้าชอบ","นายเตชินท์ ไสยาสน์","นายธนวัฒน์ งานสันเทียะ","นายพชร สุขประทีปศิลป์","นางสาวน้ำทิพย์ บุญทัยสง","นายไท โซตรง","นางสาวณัฐชา พูลศรี","นายวรชัย กิ่งก้าน","นายนันทวัฒน์ สงขุนทด","นางสาวเขมอัปสรณ์ ทิพย์ปรีชาธร","นางสาวปภาวี แก้วลอย","นางสาวกุลภรณ์ วงศ์รัตนดิลก","นางสาวชานิสา กึ่งกลาง","นางสาวมนัสชนก เจนจบ"],
+"M5/11":["Kyle","นายทักษ์ดนัย เครือแก้ว","นางสาวธนพร ขอเสริมกลาง","นายเสฏฐวุฒิ ขาบจันทึก","นายปรัชญา หินวิเศษ","นางสาวปิยะฉัตร ดีจันทึก","นางสาวอาทิตญา ประสาร","นายธารากร ฉิมพาลี","นายพีรพัฒน์ นันทะวงศ์","นายภัทรดนัย แสนศักดิ์","นางสาวนพวัลย์ วงศ์ทองดี","นายชัชชานนท์ กุมพันธ์","นายศิวา แสวงสุข","นายกันตพัฒน์ แหบสูงเนิน","นางสาวชนิกานต์ สุทธะสิงห์","นางสาวสุชานันท์ มาศรีสุขสานี","นางสาวอริสรา ด่านขุนทด","นางสาวพิมพ์พิศา เชิดชู","นายจิตติพัฒน์ ลาสอน","นายปุญญพัฒน์ พลจันทึก","นางสาวพิมพ์ลภัส ทีจันทึก","นางสาวสุพรรวะดี แซ่กระโทก","นายภัทรภัทร ศีติสาร","นายภรต หมื่นจิตร","นายทวีรัชต์ นันท์แสงเพ็ชร"],
+"M5/12":["นางสาวจิรัชยา เติบจันทึก","นางสาวเพ็ญพิชชา มูลมณี","นางสาวเมปิยา วังไธสง","นางสาวกัณฐมณี ริ้วลายเงิน","นางสาวกัลยรัตน์ อ่อนพิมพ์","นางสาวจารุวรรณ มะโนใหม่","นางสาวสุวารี พรมจันทึก","นางสาวพิชามญชุ์ ชัยศิริยากุล","นางสาวชนัญธิดา โตพิมาย","นางสาวณัฐกานต์ ชินรัมย์","นางสาววริศรา จรจันทึก","นางสาวสุจิรา ผิวขำ","นางสาวออมสิน มุ่งสูงเนิน","นายณพล ยุทธนาพงศ์","นายธานินทร์ ดั้งขุนทด","นางสาวณัฐณิชา เจียนมะเริง","นางสาวณัฐนิชา ดาโสม","นางสาวรินรดา สองขุนทด","นายปวริศ เจียระกุล","นางสาวกัญญาภัค ลาภเหลือ","นางสาวจุฑาธิบดิ์ หนูคง","นางสาวลักษิกา เจริญ","นางสาววรัญญา เจือจันทึก","นางสาวสุปัญโญ แก้วกัลยา","นางสาวปวีณา ชูโชติ","นางสาวชนันญา ถิระกิตติพันธุ์","นางสาวกัญญพัชร สุทธิประภา","นางสาวอภิชญา สนโคกสูง","นายฉันทวัฒน์ แขพิมพ์พันธ์","นางสาวสิริรัตน์ อู๋สูงเนิน","นายธนพนธ์ มาตย์นอก","นางสาวกัญญาณัฐ จิตจันทึก","นางสาวอมล อักษร","นางสาวพลอยรุ้ง กึ่งกลาง","นายพีรทัต พรประไพ"],
+"M5/13":["นางสาวนุชวรินทร์ เรือจันทึก","นางสาวศิริวรรณ ราชจันทึก","นางสาวกนิษฐนาฎ พันจักร์","นายฐิตินันท์ โปร่งจันทึก","นางสาวเขมนิจ มาพิทักษ์","นางสาวสุวพิชชา สินนอก","นายชนาธิป ควรสำโรง","นายปกรณ์จรัส ธนสิทธิพิศุทธ์","นายปาราเมศ สุวรรณดี","นายสุพรรณพงษ์ นามจันทึก","นางสาวนภัส ทวนพรมราช","นางสาวภคพร เกิดสมบูรณ์","นางสาวอริสา เลียบสูงเนิน","นางสาวอาภาภัทร สอนกระโทก","นายพชร เทียนครบุรี","นายภัชฏะ มีหนองหว้า","นางสาวเกวรินทร์ แพบขุนทด","นางสาวปรมาภรณ์ โหม่งสูงเนิน","นางสาวภัสสร์ศศิร์ ภูมิจันทึก","นางสาวอัสนา ทิวจันทึก","นางสาวพิชญาภา เกริกขจาย","นางสาววาริน หินสูงเนิน","นางสาวประภัสสร กลัดแป้น","นางสาวชุติมา ปู่บุตรชา","นายพงศกร จงปลูกกลาง","นายธเนศพล เจนการ","นางสาวนันทิตา ฮึมจันทึก","นายภูผา คำสงค์","นางสาวพิมพ์นภา นาคทองสุข","นางสาวนภสร สีแสด","นางสาวอุไรวรรณ สมบาล","นางสาวกฤติมา เจียรพันธ์พงษ์","นายรชต ตรงจันทึก"]
+};
+
+// ══════════════════════════════════════════════
+//  QUESTIONS  (20 items – Past Perfect Tense)
+// ══════════════════════════════════════════════
+const BASE_QUESTIONS = [
+  { // 1 – BEFORE
+    text:"She _____ the project before the deadline arrived.",
+    choices:["has completed","had completed","was completing","will complete"],
+    answer:1
+  },
+  { // 2 – AFTER
+    text:"After the students _____ the chapter, the teacher gave them a quiz.",
+    choices:["read","have read","had read","were reading"],
+    answer:2
+  },
+  { // 3 – ALREADY
+    text:"When Tom arrived at the party, his friends had already _____ a table.",
+    choices:["reserve","reserves","reserved","reserving"],
+    answer:2
+  },
+  { // 4 – JUST
+    text:"She had just _____ her speech when the audience began to clap.",
+    choices:["finish","finishing","finished","finishes"],
+    answer:2
+  },
+  { // 5 – FOR
+    text:"They _____ for two hours before the bus finally arrived.",
+    choices:["wait","waited","have waited","had waited"],
+    answer:3
+  },
+  { // 6 – SINCE
+    text:"She had not spoken to him since they _____ at university.",
+    choices:["meet","had met","met","were meeting"],
+    answer:2
+  },
+  { // 7 – UNTIL
+    text:"He had not eaten anything until he _____ his grandmother's house.",
+    choices:["reaches","reached","had reached","reaching"],
+    answer:1
+  },
+  { // 8 – WHEN
+    text:"When the firefighters arrived, the building _____ already _____.",
+    choices:["has / burned down","had / burned down","was / burning","have / burned down"],
+    answer:1
+  },
+  { // 9 – BY THE TIME
+    text:"By the time we _____ to the airport, the plane had already taken off.",
+    choices:["get","had gotten","getting","got"],
+    answer:3
+  },
+  { // 10 – NEVER
+    text:"They had _____ experienced such cold weather before moving to Canada.",
+    choices:["already","ever","just","never"],
+    answer:3
+  },
+  { // 11 – BEFORE
+    text:"Before she _____ the job, she had never worked in an office.",
+    choices:["gets","getting","got","will get"],
+    answer:2
+  },
+  { // 12 – AFTER
+    text:"He felt relieved after he _____ the difficult exam.",
+    choices:["had passed","passes","was passing","will pass"],
+    answer:0
+  },
+  { // 13 – ALREADY
+    text:"The teacher had already _____ the lesson when the late students arrived.",
+    choices:["starting","started","start","starts"],
+    answer:1
+  },
+  { // 14 – JUST
+    text:"The train had just _____ when we arrived at the station.",
+    choices:["leave","leaving","depart","left"],
+    answer:3
+  },
+  { // 15 – FOR
+    text:"She had studied French _____ three years before she moved to Paris.",
+    choices:["since","when","for","until"],
+    answer:2
+  },
+  { // 16 – SINCE
+    text:"It _____ raining since morning when we decided to cancel the trip.",
+    choices:["had been","has been","was","is"],
+    answer:0
+  },
+  { // 17 – WHEN
+    text:"When I called her, she had already _____ to sleep.",
+    choices:["goes","gone","went","going"],
+    answer:1
+  },
+  { // 18 – BY THE TIME
+    text:"By the time the ambulance _____, the patient had already recovered.",
+    choices:["arrives","arriving","arrived","had arrived"],
+    answer:2
+  },
+  { // 19 – NEVER
+    text:"I had _____ tasted durian before I visited Thailand.",
+    choices:["always","ever","already","never"],
+    answer:3
+  },
+  { // 20 – BEFORE
+    text:"The children had _____ all the cookies before their mother got home.",
+    choices:["eat","ate","eating","eaten"],
+    answer:3
+  }
+];
+
+// ══════════════════════════════════════════════
+//  SEEDED RNG  (Mulberry32)
+// ══════════════════════════════════════════════
+function mulberry32(seed){
+  return function(){
+    seed|=0; seed=seed+0x6D2B79F5|0;
+    let t=Math.imul(seed^seed>>>15,1|seed);
+    t=t+Math.imul(t^t>>>7,61|t)^t;
+    return((t^t>>>14)>>>0)/4294967296;
+  };
+}
+function strToSeed(s){
+  let h=5381;
+  for(let i=0;i<s.length;i++){h=((h<<5)+h)+s.charCodeAt(i);h=h&h;}
+  return Math.abs(h);
+}
+function seededShuffle(arr,rng){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){
+    const j=Math.floor(rng()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+// ══════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════
+let currentAttempt=0;
+let shuffledQuestions=[];
+let userAnswers=[];
+const LETTERS=['A','B','C','D'];
+const MAX_ATTEMPTS=3;
+
+// ══════════════════════════════════════════════
+//  DATE PICKER  – Buddhist Era
+// ══════════════════════════════════════════════
+const THAI_MONTHS=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+
+function updateBEDisplay(){
+  const val=document.getElementById('datePicker').value;
+  if(!val){document.getElementById('beDisplay').textContent='';return;}
+  const [y,m,d]=val.split('-').map(Number);
+  document.getElementById('beDisplay').textContent=`${d} ${THAI_MONTHS[m-1]} ${y+543}`;
+}
+
+function initDatePicker(){
+  const dp=document.getElementById('datePicker');
+  const now=new Date();
+  const yyyy=now.getFullYear();
+  const mm=String(now.getMonth()+1).padStart(2,'0');
+  const dd=String(now.getDate()).padStart(2,'0');
+  dp.value=`${yyyy}-${mm}-${dd}`;
+  dp.addEventListener('change',updateBEDisplay);
+  updateBEDisplay();
+}
+
+// ══════════════════════════════════════════════
+//  SECTION CHANGE  → populate datalist
+// ══════════════════════════════════════════════
+function onSectionChange(){
+  const sec=document.getElementById('sectionSel').value;
+  const sel=document.getElementById('nameInput');
+  sel.innerHTML='';
+  if(!sec){
+    sel.innerHTML='<option value="">— เลือกห้องก่อน —</option>';
+    sel.disabled=true;
+    return;
+  }
+  sel.disabled=false;
+  const placeholder=document.createElement('option');
+  placeholder.value=''; placeholder.textContent='— เลือกชื่อ-นามสกุล —';
+  sel.appendChild(placeholder);
+  (STUDENTS[sec]||[]).forEach(n=>{
+    const o=document.createElement('option'); o.value=n; o.textContent=n; sel.appendChild(o);
+  });
+}
+function validateName(){document.getElementById('infoErr').style.display='none';}
+
+function getDateStr(){
+  const val=document.getElementById('datePicker').value;
+  if(!val) return '';
+  const [y,m,d]=val.split('-').map(Number);
+  return `${d} ${THAI_MONTHS[m-1]} ${y+543}`;
+}
+
+// ══════════════════════════════════════════════
+//  START QUIZ
+// ══════════════════════════════════════════════
+async function startQuiz(){
+  const name=document.getElementById('nameInput').value.trim();
+  const sec=document.getElementById('sectionSel').value;
+  const errEl=document.getElementById('infoErr');
+
+  const dateVal=document.getElementById('datePicker').value;
+  if(!sec||!name||!dateVal){errEl.style.display='block';return;}
+
+  // Validate name in roster (normalise spaces)
+  const norm=s=>s.replace(/\s+/g,' ').trim();
+  const roster=(STUDENTS[sec]||[]).map(norm);
+  if(!roster.includes(norm(name))){
+    errEl.textContent='⚠ ไม่พบชื่อของคุณในรายชื่อนักเรียน กรุณาตรวจสอบชื่อและห้องเรียน';
+    errEl.style.display='block';
+    return;
+  }
+
+  // TEST STUDENT: skip Supabase, no lockout, fixed order
+  if(norm(name)===TEST_STUDENT){
+    currentAttempt=1;
+    showQuiz(name,sec);
+    return;
+  }
+
+  // Check attempts from Supabase
+  errEl.style.display='none';
+  document.querySelector('.btn-start').textContent='กำลังตรวจสอบ…';
+  document.querySelector('.btn-start').disabled=true;
+
+  const {data,error}=await db.from('past_perfect_attempts')
+    .select('attempt_number')
+    .eq('student_name',norm(name))
+    .eq('section',sec)
+    .order('attempt_number',{ascending:false})
+    .limit(1);
+
+  document.querySelector('.btn-start').textContent='เริ่มทำแบบฝึกหัด ▶';
+  document.querySelector('.btn-start').disabled=false;
+
+  if(error){
+    // Supabase not yet configured – allow offline mode
+    console.warn('Supabase not configured, running offline');
+    currentAttempt=1;
+    showQuiz(name,sec);
+    return;
+  }
+
+  const lastAttempt=(data&&data.length>0)?data[0].attempt_number:0;
+  if(lastAttempt>=MAX_ATTEMPTS){
+    showLocked(name,sec,lastAttempt);
+    return;
+  }
+  currentAttempt=lastAttempt+1;
+  showQuiz(name,sec);
+}
+
+function showLocked(name,sec){
+  document.getElementById('phase-info').style.display='none';
+  document.getElementById('phase-locked').style.display='block';
+  document.getElementById('lockMsg').innerHTML=
+    `<strong>${name}</strong> (${sec})<br>คุณได้ทำแบบฝึกหัดครบ ${MAX_ATTEMPTS} ครั้งแล้ว<br>ไม่สามารถทำได้อีก กรุณาติดต่อครูผู้สอน`;
+}
+
+// ══════════════════════════════════════════════
+//  RENDER QUIZ
+// ══════════════════════════════════════════════
+function showQuiz(name,sec){
+  document.getElementById('phase-info').style.display='none';
+  document.getElementById('phase-quiz').style.display='block';
+  document.getElementById('submitArea').style.display='block';
+
+  if(name===TEST_STUDENT){
+    // TEST MODE: fixed order 1–20, original A/B/C/D choices, no data saved
+    shuffledQuestions=BASE_QUESTIONS.map(q=>({...q}));
+  } else {
+    // Seed: name + section + attempt number (ensures different shuffle per retake)
+    const seed=strToSeed(name+sec+currentAttempt);
+    const rng=mulberry32(seed);
+
+    // Shuffle question ORDER
+    shuffledQuestions=seededShuffle(BASE_QUESTIONS.map((q,i)=>({...q,_orig:i})),rng);
+
+    // For each question, shuffle CHOICES (tracking correct answer position)
+    shuffledQuestions=shuffledQuestions.map(q=>{
+      const idxArr=[0,1,2,3];
+      const shuffledIdx=seededShuffle(idxArr,rng);
+      const newChoices=shuffledIdx.map(i=>q.choices[i]);
+      const newAnswer=shuffledIdx.indexOf(q.answer);
+      return {...q,choices:newChoices,answer:newAnswer};
+    });
+  }
+
+  userAnswers=new Array(20).fill(null);
+  renderQuestions();
+}
+
+function renderQuestions(){
+  const c=document.getElementById('qContainer');
+  c.innerHTML='';
+  shuffledQuestions.forEach((q,qi)=>{
+    const card=document.createElement('div');
+    card.className='q-card'; card.id=`qcard-${qi}`;
+    card.innerHTML=`<div class="q-num">Question ${qi+1}</div>
+      <div class="q-text">${q.text}</div>
+      <div class="choices" id="choices-${qi}"></div>`;
+    q.choices.forEach((ch,ci)=>{
+      const lbl=document.createElement('label');
+      lbl.className='choice'; lbl.id=`ch-${qi}-${ci}`;
+      lbl.innerHTML=`<input type="radio" name="q${qi}" value="${ci}">
+        <span class="cletter">${LETTERS[ci]}</span>${ch}`;
+      lbl.addEventListener('click',()=>selectAnswer(qi,ci));
+      card.querySelector('.choices').appendChild(lbl);
+    });
+    c.appendChild(card);
+  });
+}
+
+function selectAnswer(qi,ci){
+  if(userAnswers[qi]!==null)
+    document.getElementById(`ch-${qi}-${userAnswers[qi]}`).classList.remove('sel');
+  userAnswers[qi]=ci;
+  do
