@@ -180,19 +180,23 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#eef2f7;min-height:100vh
   <div class="score-card">
     <div class="s-icon" id="sIcon"></div>
     <div class="s-title">Worksheet Complete!</div>
-    <div class="s-student" id="sStudent"></div>
-    <div class="s-num" id="sNum"></div>
+    <div class="s-student"><span id="sName"></span>&nbsp;·&nbsp;<span id="sSec"></span></div>
+    <div class="s-num" id="sScore"></div>
     <div class="s-out">out of 20</div>
     <div class="s-pct" id="sPct"></div>
-    <div class="s-msg" id="sMsg"></div>
+    <div class="s-msg" id="sDate" style="font-size:12px;color:#94a3b8;margin-bottom:16px"></div>
     <div class="s-warn" id="sWarn" style="display:none"></div>
-    <button class="btn-close" onclick="closeScore()">Close</button>
-    <button class="btn-retake" id="btnRetake" style="display:none" onclick="doRetake()">Retake</button>
+    <div style="display:flex;gap:10px;justify-content:center">
+      <button class="btn-close" onclick="closeScore()">Close</button>
+      <button class="btn-retake" id="btnRetake" style="display:none" onclick="doRetake()">Retake</button>
+    </div>
     <div class="wrong-list" id="wrongList" style="display:none"></div>
   </div>
 </div>
 
 <script>
+const el = id => document.getElementById(id);
+
 // ══════════════════════════════════════════════
 //  SUPABASE CONFIG  ← fill in after project is ready
 // ══════════════════════════════════════════════
@@ -615,15 +619,18 @@ async function submitQuiz(){
 function showScore(name, sec, score){
   const total=shuffledQuestions.length;
   const pct=Math.round((score/total)*100);
+
+  // Populate header info
   el('sName').textContent=name;
   el('sSec').textContent=sec;
   el('sScore').textContent=`${score} / ${total}`;
   el('sPct').textContent=`${pct}%`;
   el('sDate').textContent=getDateStr();
+  el('sIcon').textContent=pct>=80?'🎉':pct>=60?'👍':'📝';
 
+  // Attempts / retake message
   const warnEl=el('sWarn');
   const retakeBtn=el('btnRetake');
-
   if(name===TEST_STUDENT){
     warnEl.style.display='block';
     warnEl.textContent='🔧 TEST MODE — unlimited retakes, no data saved';
@@ -642,6 +649,28 @@ function showScore(name, sec, score){
       warnEl.style.color='';
       retakeBtn.style.display='none';
     }
+  }
+
+  // Wrong answers — show question + student's answer only (no correct answer revealed)
+  const wrongList=el('wrongList');
+  const wrongs=shuffledQuestions
+    .map((q,i)=>({q,i,ua:userAnswers[i]}))
+    .filter(({q,ua})=>ua!==q.answer);
+
+  if(wrongs.length>0){
+    wrongList.style.display='block';
+    wrongList.innerHTML=
+      `<div style="font-size:13px;font-weight:700;color:#dc2626;margin-bottom:10px">` +
+      `❌ Items to Review (${wrongs.length})</div>`+
+      wrongs.map(({q,i,ua})=>`
+        <div class="wrong-item">
+          <div class="wq-label">Question ${i+1}</div>
+          <div class="wq-text">${q.text}</div>
+          <div class="wq-your">Your answer: <span>${q.choices[ua]}</span></div>
+        </div>`).join('');
+  } else {
+    wrongList.style.display='none';
+    wrongList.innerHTML='';
   }
 
   el('scoreOverlay').style.display='flex';
